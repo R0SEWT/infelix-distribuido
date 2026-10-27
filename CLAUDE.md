@@ -1,48 +1,64 @@
 # infelix-distribuido — AI Agent Instructions
 
-## Domain / Scientific Context
+Trabajo Final (TB2) del curso **Programación Concurrente y Distribuida (1ACC0065)**, UPC, 2026-20.
+Lo trabajan Rody Vilchez, Dayana Gómez y Julio Meza. El cuaderno del curso (apuntes, labs, beads de
+las evaluaciones, enunciado) vive en `../concurrente`; este repo es solo el sistema.
 
-<!-- The real-world problem this project addresses. State the claim/objective, the outcome,
-     and — critically — the data provenance (own data? regional/Peruvian domain? public source?).
-     This is the differentiator; be concrete. -->
+## Contexto
 
-- **Problem**: <!-- fill -->
-- **Outcome / target**: <!-- fill -->
-- **Data provenance**: <!-- fill: source, ownership, how acquired -->
+- **Problema**: caso 2 del enunciado, clasificación multiclase del tipo de delito según horario, zona
+  y patrón, sobre las denuncias policiales registradas (SIDPOL, MININTER/PNP).
+- **Pregunta de impacto social**: <!-- fill: se documenta desde el inicio (lo exige el enunciado) -->
+- **Sesgo de denuncia**: el dato registra dónde se denuncia, no dónde ocurre el delito. Es el tema de
+  la tesis de Rody (`~/Code/tesis/infelix`, de ahí el nombre). Cualquier lectura de "zonas de riesgo"
+  tiene que decirlo; es también el ángulo ético que pide el DD (ABET SO4).
+- **Procedencia de datos**:
+  - Corpus SIDPOL de la API de MININTER: Lima 3,136,427 filas, nacional 9,398,491 (parquet), en
+    `~/Code/tesis/infelix/data/raw/external/` (`LIMA.parquet`, `data_denuncias/`).
+  - Dataset de denuncias del Portal de Datos Abiertos (datosabiertos.gob.pe), que es el que exige el
+    enunciado. Se compara contra el de MININTER: cobertura, columnas, coincidencia de registros.
+  - **Nada de esto se versiona**: el repo es público y los registros traen direcciones de los hechos.
+    Lo que entra al repo es una muestra pequeña, sin columnas de dirección ni observaciones.
+- **Algoritmo**: Random Forest distribuido (bagging): cada nodo entrena sus árboles sobre su partición,
+  el coordinador vota.
 
-## Architecture
+## Arquitectura
 
-<!-- How the project runs. If it's a pipeline, describe the stages and the data flow between them. -->
+Las cuatro partes del enunciado, una por entregable:
+
+| Parte | Qué hace | Entregable |
+|------|---------|-----------|
+| A — Cargador concurrente | lee >1M filas por bloques con goroutines y channels, limpia y valida | PC3 (07/11) |
+| B — Entrenamiento distribuido | Random Forest en nodos, resultados al coordinador por TCP | PC3 diseño, PC4 clúster |
+| C — API coordinadora | REST/WebSocket en Go, <100 ms, MongoDB + Redis | PC4 (21/11) |
+| D — Frontend SPA | predicciones en tiempo real e impacto social | TB2 (29/11) |
+
+Todo en Go, desplegado con Docker Compose (UI, API, nodos ML, Mongo, Redis).
 
 ```bash
-# e.g. uv run ingest && uv run features && uv run model
+go test -race ./...     # siempre con -race: sin él un test no demuestra nada sobre concurrencia
 ```
 
-## Key Files
+## Archivos clave
 
-| File | Purpose |
+| Archivo | Propósito |
 |------|---------|
-| `src/infelix_distribuido/...` | <!-- fill --> |
-| `configs/...` | <!-- fill --> |
+| `go.mod` | Módulo `github.com/R0SEWT/infelix-distribuido`. |
+| `.github/workflows/go.yml` | CI: `go test -race`, `go vet`, `gofmt`. |
+| `../concurrente/materials/extra/CC65-TB2-1ACC0065_202620.pdf` | Enunciado y rúbrica (no versionado: es del profesor). |
 
-## Data Conventions
+## Convenciones
 
-<!-- Adjust/remove if this is not a data project. Defaults reflect the medallion + polars/duckdb stack. -->
-
-- **Layers**: raw → `data/bronze/`, cleaned → `data/silver/`, analytic → `data/gold/`. All gitignored.
-- **Where it lives**: <!-- fill: gitignored data still needs a home — say where each layer lives and how
-  to rebuild it: regenerable from source (the command) · remote silver (see below) · a private HF
-  Storage Bucket for working data · an HF dataset repo (card + license) for data you publish.
-  Never publish third-party or personal data. See https://github.com/R0SEWT/project-kit/blob/main/catalog/setup-options.md -->
-- **Polars over pandas** everywhere; only drop to numpy when a library requires it.
-- **DuckDB for SQL joins** across parquet; Polars for local transforms.
-- **Remote silver**: reference the remote root via `$SILVER` in SQL when pulling shared data.
-- Keep dates as typed `Date`, never strings, in intermediate tables.
-
-## Conventions
-
-<!-- Project-specific rules: ID normalization, seeds, temporal discipline, naming, etc. -->
-
+- **Git Flow**: `develop` es la rama por defecto; trabajo en `feature/*` → PR a `develop`; cada
+  entrega sale de `release/pc3`, `release/pc4`, `release/tb2` → PR a `main`. Nunca abrir una PR con
+  head=`develop`: `delete_branch_on_merge` la borraría (pasó en `concurrente`, PR #40). Ese ajuste
+  está apagado aquí, pero la regla sigue.
+- **Issues de GitHub solo para problemas** (bugs, bloqueos). El trabajo se sigue en beads. El tablero
+  Kanban de GitHub se arma al final, antes de cada entrega.
+- **Informe en Word**, nombre `1ACC0065_PC3_202610_Informe_UXXXXXXXX` (el enunciado dice 202610).
+- **Commits, PRs e issues en español**, sin metadata de IA.
+- Equipo: si Dayana y Julio se suben, se reparte; si no, el trabajo avanza igual. Nada del flujo
+  debe depender de que ellos usen beads o Claude.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
 ## Beads Issue Tracker

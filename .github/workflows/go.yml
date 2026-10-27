@@ -1,0 +1,35 @@
+name: Go
+
+# Sin filtros de paths: el check "test" protege main y develop, y una PR que no
+# tocara los paths nunca lo correría y quedaría bloqueada.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      # -short salta los tests que necesitan el corpus completo, que no se versiona.
+      - name: Test with race detector
+        run: go test -race -short ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Gofmt
+        run: test -z "$(gofmt -l .)"

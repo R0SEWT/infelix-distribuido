@@ -19,3 +19,20 @@ __pycache__/
 
 # Beads / Dolt files (added by bd init)
 .beads/proxieddb/
+
+# Datos: nunca se versionan (repo público, registros con direcciones)
+data/*
+!data/README.md
+!data/sample/
+*.parquet
+*.csv
+!data/sample/*.csv
+
+# Go
+/bin/
+*.test
+*.out
+coverage.*
+
+# Docker Compose
+.env
