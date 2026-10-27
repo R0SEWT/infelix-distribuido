@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "infelix_distribuido",
+  "project_id": "1e553194-c30d-47ab-8689-d0e3b47412c4"
+}
