@@ -1,4 +1,4 @@
 // Package infelixdistribuido clasifica el tipo de delito sobre las denuncias
 // policiales del Perú (SIDPOL) con un Random Forest entrenado en un clúster de
-// nodos Go. Los comandos viven en cmd/.
+// nodos Go.
 package infelixdistribuido
