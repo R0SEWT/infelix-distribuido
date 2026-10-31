@@ -1,4 +1,4 @@
-# infelix-distribuido — AI Agent Instructions
+# aire-distribuido — AI Agent Instructions
 
 Trabajo Final (TB2) del curso **Programación Concurrente y Distribuida (1ACC0065)**, UPC, 2026-20.
 Lo trabajan Rody Vilchez, Dayana Gómez y Julio Meza. El cuaderno del curso (apuntes, labs, beads de
@@ -6,21 +6,27 @@ las evaluaciones, enunciado) vive en `../concurrente`; este repo es solo el sist
 
 ## Contexto
 
-- **Problema**: caso 2 del enunciado, clasificación multiclase del tipo de delito según horario, zona
-  y patrón, sobre las denuncias policiales registradas (SIDPOL, MININTER/PNP).
-- **Pregunta de impacto social**: <!-- fill: se documenta desde el inicio (lo exige el enunciado) -->
-- **Sesgo de denuncia**: el dato registra dónde se denuncia, no dónde ocurre el delito. Es el tema de
-  la tesis de Rody (`~/Code/tesis/infelix`, de ahí el nombre). Cualquier lectura de "zonas de riesgo"
-  tiene que decirlo; es también el ángulo ético que pide el DD (ABET SO4).
-- **Procedencia de datos**:
-  - Corpus SIDPOL de la API de MININTER: Lima 3,136,427 filas, nacional 9,398,491 (parquet), en
-    `~/Code/tesis/infelix/data/raw/external/` (`LIMA.parquet`, `data_denuncias/`).
-  - Dataset de denuncias del Portal de Datos Abiertos (datosabiertos.gob.pe), que es el que exige el
-    enunciado. Se compara contra el de MININTER: cobertura, columnas, coincidencia de registros.
-  - **Nada de esto se versiona**: el repo es público y los registros traen direcciones de los hechos.
-    Lo que entra al repo es una muestra pequeña, sin columnas de dirección ni observaciones.
-- **Algoritmo**: Random Forest distribuido (bagging): cada nodo entrena sus árboles sobre su partición,
-  el coordinador vota.
+- **Problema**: caso 10 del enunciado, Monitoreo Calidad del Aire y Sensores Ambientales: clustering
+  y predicción masiva de concentraciones de PM2.5/PM10 para alertas tempranas de salud respiratoria.
+  El equipo empezó con el caso 2 (denuncias SIDPOL) y el profesor lo reasignó al 10; el repo se llamaba
+  `infelix-distribuido`.
+- **Pregunta de impacto social** (borrador, falta validarla con el equipo): ¿en qué estaciones y a qué
+  horas se concentran los episodios de PM2.5/PM10 que superan el ECA de aire, y con cuánta anticipación
+  se podría avisar a la población cercana?
+- **Cobertura de estaciones**: las estaciones no cubren el territorio de forma pareja. Una zona sin
+  estación no es una zona con aire limpio; cualquier mapa de "zonas de riesgo" tiene que decirlo. Es
+  el ángulo ético que pide el DD (ABET SO4).
+- **Procedencia de datos** (detalle y enlaces en `data/README.md`):
+  - OEFA, Vigilancia y Seguimiento ambiental en la calidad del aire: 34 estaciones, CSV de 1.3 GB.
+    Es la fuente principal y la que pasa el millón de filas que pide el enunciado.
+  - SENAMHI, Monitoreo de los contaminantes del aire en Lima Metropolitana: 577,794 registros.
+  - Ninguna se versiona, por tamaño. Lo que entra al repo es una muestra pequeña en `data/sample/`.
+- **Algoritmo**: K-Means paralelo. Cada nodo asigna su partición a los centroides y devuelve sumas y
+  conteos parciales por cluster; el coordinador recalcula los centroides y repite hasta converger. Una
+  lectura nueva se clasifica por su centroide más cercano, y la alerta sale del régimen más los
+  umbrales del ECA (DS 003-2017-MINAM).
+- **Propuesta técnica**: `docs/propuesta.md`. Sale del borrador SENAMHI de setiembre
+  (`../concurrente`, rama `feat/senamhi-ods13`), con el modelo cambiado de árbol de decisión a K-Means.
 
 ## Arquitectura
 
@@ -28,10 +34,10 @@ Las cuatro partes del enunciado, una por entregable:
 
 | Parte | Qué hace | Entregable |
 |------|---------|-----------|
-| A — Cargador concurrente | lee >1M filas por bloques con goroutines y channels, limpia y valida | PC3 (07/11) |
-| B — Entrenamiento distribuido | Random Forest en nodos, resultados al coordinador por TCP | PC3 diseño, PC4 clúster |
+| A — Cargador concurrente | lee el CSV de OEFA por bloques con goroutines y channels, limpia y valida | PC3 (07/11) |
+| B — K-Means distribuido | nodos con sumas parciales por cluster, el coordinador recalcula centroides por TCP | PC3 diseño, PC4 clúster |
 | C — API coordinadora | REST/WebSocket en Go, <100 ms, MongoDB + Redis | PC4 (21/11) |
-| D — Frontend SPA | predicciones en tiempo real e impacto social | TB2 (29/11) |
+| D — Frontend SPA | mapa de estaciones con su régimen y las alertas en tiempo real | TB2 (29/11) |
 
 Todo en Go, desplegado con Docker Compose (UI, API, nodos ML, Mongo, Redis).
 
@@ -43,7 +49,9 @@ go test -race ./...     # siempre con -race: sin él un test no demuestra nada s
 
 | Archivo | Propósito |
 |------|---------|
-| `go.mod` | Módulo `github.com/R0SEWT/infelix-distribuido`. |
+| `go.mod` | Módulo `github.com/R0SEWT/aire-distribuido`. |
+| `docs/propuesta.md` | Propuesta técnica: datos, K-Means distribuido, sincronización y experimentos. |
+| `data/README.md` | Fuentes, volumen y enlaces de descarga. |
 | `.github/workflows/go.yml` | CI: `go test -race`, `go vet`, `gofmt`. |
 | `../concurrente/materials/extra/CC65-TB2-1ACC0065_202620.pdf` | Enunciado y rúbrica (no versionado: es del profesor). |
 

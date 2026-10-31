@@ -1,13 +1,15 @@
-# infelix-distribuido
+# aire-distribuido
 
-Clasificación distribuida del tipo de delito sobre las denuncias policiales del Perú (SIDPOL,
-MININTER/PNP): carga concurrente de más de 1M de registros, Random Forest entrenado en un clúster de
-nodos Go, API coordinadora y un panel web de impacto social.
+Monitoreo de la calidad del aire en el Perú con las estaciones de SENAMHI y OEFA: carga concurrente
+de millones de lecturas, K-Means paralelo en un clúster de nodos Go que agrupa estaciones y horas en
+regímenes de contaminación por PM2.5/PM10, API coordinadora y un panel web de alertas tempranas de
+salud respiratoria.
 
-Trabajo Final del curso Programación Concurrente y Distribuida (1ACC0065), UPC, 2026-20.
+Trabajo Final del curso Programación Concurrente y Distribuida (1ACC0065), UPC, 2026-20. Caso 10 del
+enunciado: Monitoreo Calidad del Aire y Sensores Ambientales.
 
-> El dato registra **dónde se denuncia**, no dónde ocurre el delito. Las zonas que el modelo marca
-> como de mayor riesgo heredan ese sesgo; el informe lo trata explícitamente.
+> Las estaciones no cubren el territorio de forma pareja. Una zona sin estación no es una zona con
+> aire limpio; el panel y el informe lo dicen explícitamente.
 
 ## Equipo
 
@@ -25,8 +27,7 @@ El despliegue con Docker Compose (API, nodos ML, MongoDB, Redis, frontend) llega
 
 ## Datos
 
-Los datos no se versionan: el repo es público y los registros incluyen direcciones. Ver
-`data/README.md` para obtenerlos.
+Los datos no se versionan: el CSV de OEFA pesa 1.3 GB. Ver `data/README.md` para obtenerlos.
 
 ## Flujo de trabajo
 
